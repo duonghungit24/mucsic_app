@@ -10,10 +10,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@react-native-community/cli": "^5.0.1",
     "@react-native-community/slider": "^3.0.3",
     "react": "17.0.2",
-    "react-native": "0.65.0",
+    "react-native": "^0.65.0",
     "react-native-safe-area-context": "^3.3.0",
+    "react-native-track-player": "^2.0.0-rc18",
     "react-native-vector-icons": "^8.1.0"
   },
   "devDependencies": {

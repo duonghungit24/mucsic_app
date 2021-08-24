@@ -13,6 +13,7 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Slider from '@react-native-community/slider';
 import listSongs from '../model/data';
+import TrackPlayer from 'react-native-track-player';
 
 const {height, width} = Dimensions.get('window');
 
@@ -52,7 +53,7 @@ const MusicPlay = () => {
       </Animated.View>
     );
   };
-
+  const [heart,setHeart] = useState(false)
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.main}>
@@ -94,20 +95,20 @@ const MusicPlay = () => {
         </View>
         <View style={styles.controller}>
           <TouchableOpacity onPress={skipPrevious}>
-            <Ionicons name="play-skip-back-outline" size={35} color="#fff" />
+            <Ionicons name="play-skip-back-outline" size={35} color="#fff" style={{marginTop:15}}/>
           </TouchableOpacity>
           <TouchableOpacity>
-            <Ionicons name="pause-outline" size={35} color="#fff" />
+            <Ionicons name="pause-circle-outline" size={60} color="#fff"/>
           </TouchableOpacity>
           <TouchableOpacity onPress={skipNext}>
-            <Ionicons name="play-skip-forward-outline" size={35} color="#fff" />
+            <Ionicons name="play-skip-forward-outline" size={35} color="#fff" style={{marginTop:15}} />
           </TouchableOpacity>
         </View>
       </View>
       <View style={styles.bottom}>
         <View style={styles.bottomControl}>
-          <TouchableOpacity>
-            <Ionicons name="heart-outline" size={30} color="#fff" />
+          <TouchableOpacity onPress={() => setHeart(!heart)}>
+            <Ionicons name={heart ? "heart" : "heart-outline"} size={30} color={heart ? "#ef233c" : "#fff"} />
           </TouchableOpacity>
           <TouchableOpacity>
             <Ionicons name="repeat" size={30} color="#fff" />
@@ -133,7 +134,7 @@ export default MusicPlay;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1d3557',
+     backgroundColor: '#0b0d23',
   },
   main: {
     flex: 1,
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
       width: 5,
       height: 5,
     },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
@@ -190,10 +191,10 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   controller: {
-    width: '50%',
+    width: '55%',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 15,
+    marginTop: 10,
   },
   bottom: {
     width: width,
