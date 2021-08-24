@@ -11,6 +11,7 @@ import {
   Animated,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Slider from '@react-native-community/slider';
 import listSongs from '../model/data';
 import TrackPlayer , { 
@@ -23,12 +24,12 @@ import TrackPlayer , {
 const {height, width} = Dimensions.get('window');
 
 
-const setUpPlayers = async () => {   // thiết lập players 
+const setUpPlayers = async() => {   // thiết lập players 
     await TrackPlayer.setupPlayer()
     await TrackPlayer.add(listSongs); // add songs in list queue
 }
 
-const musicPlay = async (playbackState) => {           // lấy ra bài nhạc đang phát
+const musicPlay = async(playbackState) => {           // lấy ra bài nhạc đang phát
   const trackIndex = await TrackPlayer.getCurrentTrack();
   if(trackIndex != null ){
     if(playbackState == State.Paused){            /// nếu nó đang dừng thì nhấn sẽ phát
@@ -42,31 +43,41 @@ const musicPlay = async (playbackState) => {           // lấy ra bài nhạc �
 const MusicPlay = () => {
   const playbackState =  usePlaybackState(); //lấy ra trạng thái đang phát hay dừng của bài hát
 
+  const progress = useProgress(); //tiến trình bài hát
+
+  const skipNextSong = async(songId) => {    //chức năng next bài hát
+    await TrackPlayer.skip(songId);
+  }
+
   const scrollX = useRef(new Animated.Value(0)).current;  // useRef để lưu giá trị hiện tại {current}
 
   const [songIndex, setSongIndex] = useState(0);
   useEffect(() => {             //useEffect giống componenetDidMount,WillDidMount để sử lý sau khi mount
-    setUpPlayers(); //goi ham` 
+   
     scrollX.addListener(({value}) => {
       //thêm sự kiện cho scroll để lấy giá trị
       const index = Math.round(value / width); // lấy index;
       setSongIndex(index);
+      skipNextSong(index); //next bài hát
     });
+    setUpPlayers(); //goi ham` 
     return () => {
       scrollX.removeAllListeners();  // hủy sử kiện scroll
     };
-  }, []);
+  },[]);
   const songSlide = useRef(null);
 
   const skipNext = () => {
     songSlide.current.scrollToOffset({
       offset:(songIndex+1)*width
     })
+    setHeart(false);
   }
   const skipPrevious = () => {
     songSlide.current.scrollToOffset({
       offset:(songIndex-1)*width
-    })
+    });
+    setHeart(false);
   }
   
   const renderSong = ({index, item}) => {
@@ -79,7 +90,23 @@ const MusicPlay = () => {
       </Animated.View>
     );
   };
-  const [heart,setHeart] = useState(false)
+  const [heart,setHeart] = useState(false);
+  const [repeatMode ,setRepeatMode] = useState('off');
+  const repeatIcon = () => {
+    if(repeatMode == 'off')
+      return 'repeat-off'
+    if(repeatMode == 'once')
+      return 'repeat-once'
+    return 'repeat'
+  }
+  const setRepeat = () => {
+    if(repeatMode == 'off')
+      setRepeatMode('once');
+    if(repeatMode == 'once')
+      setRepeatMode('repeat')
+    if(repeatMode == 'repeat')
+      setRepeatMode('off')
+  }
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.main}>
@@ -106,18 +133,20 @@ const MusicPlay = () => {
         <View>
           <Slider
             style={styles.slider}
-            value={10}
+            value={progress.position} //vị trí của tiến trình
             minimumValue={0}
-            maximumValue={100}
+            maximumValue={progress.duration}
             thumbTintColor="#ffddd2"
             minimumTrackTintColor="#83c5be"
             maximumTrackTintColor="#ffffff"
-            onSlidingComplete={() => {}}
+            onSlidingComplete={async (value) => {
+              await TrackPlayer.seekTo(value); //seeto tìm kiếm vị trí cụ thể trong player
+            }}
           />
         </View>
         <View style={styles.timeWrapper}>
-          <Text style={styles.timeStart}>0:00</Text>
-          <Text style={styles.timeEnd}>4:00</Text>
+          <Text style={styles.timeStart}>{new Date(progress.position*1000).toISOString().substr(14,5)}</Text>
+          <Text style={styles.timeEnd}>{new Date((progress.duration - progress.position)*1000).toISOString().substr(14,5)}</Text>
         </View>
         <View style={styles.controller}>
           <TouchableOpacity onPress={skipPrevious}>
@@ -136,8 +165,8 @@ const MusicPlay = () => {
           <TouchableOpacity onPress={() => setHeart(!heart)}>
             <Ionicons name={heart ? "heart" : "heart-outline"} size={30} color={heart ? "#ef233c" : "#fff"} />
           </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="repeat" size={30} color="#fff" />
+          <TouchableOpacity onPress = {setRepeat}>
+            <MaterialCommunityIcons name={repeatIcon()} size={30} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity>
             <Ionicons name="share-outline" size={30} color="#fff" />
