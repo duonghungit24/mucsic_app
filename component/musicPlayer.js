@@ -17,6 +17,7 @@ import listSongs from '../model/data';
 import TrackPlayer , { 
   RepeatMode, 
   State,
+  Event,
   usePlaybackState,
   useProgress,
   useTrackPlayerEvents
@@ -45,39 +46,51 @@ const MusicPlay = () => {
 
   const progress = useProgress(); //tiến trình bài hát
 
-  const skipNextSong = async(songId) => {    //chức năng next bài hát
-    await TrackPlayer.skip(songId);
+  const skipNextSong = async(songIdex) => {    //chức năng next bài hát
+    await TrackPlayer.skip(songIdex);
   }
 
   const scrollX = useRef(new Animated.Value(0)).current;  // useRef để lưu giá trị hiện tại {current}
 
   const [songIndex, setSongIndex] = useState(0);
+ 
   useEffect(() => {             //useEffect giống componenetDidMount,WillDidMount để sử lý sau khi mount
-   
+    setUpPlayers(); //goi ham` 
     scrollX.addListener(({value}) => {
       //thêm sự kiện cho scroll để lấy giá trị
       const index = Math.round(value / width); // lấy index;
-      setSongIndex(index);
       skipNextSong(index); //next bài hát
+      setSongIndex(index);
     });
-    setUpPlayers(); //goi ham` 
+  
     return () => {
       scrollX.removeAllListeners();  // hủy sử kiện scroll
     };
   },[]);
   const songSlide = useRef(null);
-
+  const [tittle, setTrackTitle] = useState(); //lấy title
+  const [image,setTrackImage] = useState();
+  const [author,setTrackAuthor] = useState();
+  useTrackPlayerEvents([Event.PlaybackTrackChanged], async event => {         //bắt sự kiện khi kết thúc bài hát chuyển tiêu đề , tên tác giả..
+    if (event.type === Event.PlaybackTrackChanged && event.nextTrack != null) {
+        const track = await TrackPlayer.getTrack(event.nextTrack);
+        const {title , image ,author} = track || {};
+        setTrackTitle(title);
+        setTrackImage(image);
+        setTrackAuthor(author);
+    }
+});
   const skipNext = () => {
     songSlide.current.scrollToOffset({
       offset:(songIndex+1)*width
     })
-    setHeart(false);
+    // setHeart(false);
   }
   const skipPrevious = () => {
     songSlide.current.scrollToOffset({
       offset:(songIndex-1)*width
     });
-    setHeart(false);
+    // setHeart(false);
   }
   
   const renderSong = ({index, item}) => {
@@ -85,12 +98,12 @@ const MusicPlay = () => {
       <Animated.View
         style={{width: width, justifyContent: 'center', alignItems: 'center'}}>
         <View style={styles.imageWrapper}>
-          <Image style={styles.image} source={item.image} />
+          <Image style={styles.image} source={image} />
         </View>
       </Animated.View>
     );
   };
-  const [heart,setHeart] = useState(false);
+  // const [heart,setHeart] = useState(false);
   const [repeatMode ,setRepeatMode] = useState('off');
   const repeatIcon = () => {
     if(repeatMode == 'off')
@@ -101,11 +114,20 @@ const MusicPlay = () => {
   }
   const setRepeat = () => {
     if(repeatMode == 'off')
+    {
+      TrackPlayer.setRepeatMode(RepeatMode.Track)
       setRepeatMode('once');
+    }
     if(repeatMode == 'once')
+    {
+      TrackPlayer.setRepeatMode(RepeatMode.Queue)
       setRepeatMode('repeat')
+    }
     if(repeatMode == 'repeat')
+    {
+      TrackPlayer.setRepeatMode(RepeatMode.Off)
       setRepeatMode('off')
+    }
   }
   return (
     <SafeAreaView style={styles.container}>
@@ -127,8 +149,8 @@ const MusicPlay = () => {
           />
         </View>
         <View>
-          <Text style={styles.title}>{listSongs[songIndex].title}</Text>
-          <Text style={styles.author}>{listSongs[songIndex].author}</Text>
+          <Text style={styles.title}>{tittle}</Text>
+          <Text style={styles.author}>{author}</Text>
         </View>
         <View>
           <Slider
@@ -139,7 +161,7 @@ const MusicPlay = () => {
             thumbTintColor="#ffddd2"
             minimumTrackTintColor="#83c5be"
             maximumTrackTintColor="#ffffff"
-            onSlidingComplete={async (value) => {
+            onSlidingComplete={async(value) => {
               await TrackPlayer.seekTo(value); //seeto tìm kiếm vị trí cụ thể trong player
             }}
           />
@@ -153,7 +175,7 @@ const MusicPlay = () => {
             <Ionicons name="play-skip-back-outline" size={35} color="#fff" style={{marginTop:15}}/>
           </TouchableOpacity>
           <TouchableOpacity onPress = {() => musicPlay(playbackState)}>
-            <Ionicons name={playbackState == State.Playing ? "pause-circle-outline" : "play-circle-outline" } size={60} color="#fff"/>
+            <Ionicons name={playbackState === State.Playing ? "pause-circle-outline" : "play-circle-outline" } size={60} color="#fff"/>
           </TouchableOpacity>
           <TouchableOpacity onPress={skipNext}>
             <Ionicons name="play-skip-forward-outline" size={35} color="#fff" style={{marginTop:15}} />
@@ -162,8 +184,8 @@ const MusicPlay = () => {
       </View>
       <View style={styles.bottom}>
         <View style={styles.bottomControl}>
-          <TouchableOpacity onPress={() => setHeart(!heart)}>
-            <Ionicons name={heart ? "heart" : "heart-outline"} size={30} color={heart ? "#ef233c" : "#fff"} />
+          <TouchableOpacity >
+            <Ionicons name="heart-outline"  size={30} color= "#fff" />
           </TouchableOpacity>
           <TouchableOpacity onPress = {setRepeat}>
             <MaterialCommunityIcons name={repeatIcon()} size={30} color="#fff" />
