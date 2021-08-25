@@ -20,13 +20,22 @@ import TrackPlayer , {
   Event,
   usePlaybackState,
   useProgress,
-  useTrackPlayerEvents
+  useTrackPlayerEvents,
+  Capability
 } from 'react-native-track-player';
 const {height, width} = Dimensions.get('window');
 
 
 const setUpPlayers = async() => {   // thiết lập players 
     await TrackPlayer.setupPlayer()
+     TrackPlayer.updateOptions({
+      capabilities: [
+        Capability.Play,
+        Capability.Pause,
+        Capability.SkipToNext,
+        Capability.SkipToPrevious,
+        Capability.Stop,
+    ],})
     await TrackPlayer.add(listSongs); // add songs in list queue
 }
 
@@ -74,7 +83,7 @@ const MusicPlay = () => {
   useTrackPlayerEvents([Event.PlaybackTrackChanged], async event => {         //bắt sự kiện khi kết thúc bài hát chuyển tiêu đề , tên tác giả..
     if (event.type === Event.PlaybackTrackChanged && event.nextTrack != null) {
         const track = await TrackPlayer.getTrack(event.nextTrack);
-        const {title , image ,author} = track || {};
+        const {title , image ,author} = track ;
         setTrackTitle(title);
         setTrackImage(image);
         setTrackAuthor(author);
